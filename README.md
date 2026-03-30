@@ -1,8 +1,7 @@
-# Parameter-Efficient-Deep-Learning-Models-for-Computational-Drug-Discovery
+# Parameter Efficient Deep Learning Models for Multi-Target Binding Affinity and hERG Cardiotoxicity Prediction
 
-# 🧬 ChemBERT-hERG: SMILES-Based hERG Cardiotoxicity Prediction
 
-A deep learning pipeline using **ChemBERTa** (RoBERTa pretrained on PubChem SMILES) for binary classification of hERG channel blockers — a critical step in early-stage drug safety screening.
+A deep learning pipeline using  **Graph neural Network** and **ChemBERTa** (RoBERTa pretrained on PubChem SMILES) for binary classification of hERG channel blockers — a critical step in early-stage drug safety screening.
 
 ---
 
@@ -17,9 +16,7 @@ A deep learning pipeline using **ChemBERTa** (RoBERTa pretrained on PubChem SMIL
 - [Training](#training)
 - [Evaluation](#evaluation)
 - [Results](#results)
-- [Project Structure](#project-structure)
 - [Dependencies](#dependencies)
-- [Citation](#citation)
 
 ---
 
@@ -31,6 +28,7 @@ This project fine-tunes [ChemBERTa (`seyonec/PubChem10M_SMILES_BPE_396_250`)](ht
 - Tokenizes SMILES strings using a BPE tokenizer trained on 10M PubChem compounds
 - Fine-tunes a RoBERTa-based sequence classifier
 - Supports **stratified k-fold cross-validation**
+- LoRA applied fine-tuning
 - Reports MCC, ROC-AUC, Accuracy, F1, Sensitivity, and Specificity
 
 ---
@@ -78,8 +76,7 @@ Blocker / Non-Blocker
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/chembert-herg.git
-cd chembert-herg
+git clone [https://github.com/FairuzShadmaniShishir/Parameter-Efficient-Deep-Learning-Models-for-Computational-Drug-Discovery.git]
 ```
 
 ### 2. Create a virtual environment (recommended)
@@ -135,7 +132,7 @@ df['label'] = df['pChEMBL Value'].apply(lambda x: 1 if x >= 6.5 else 0)
 ### Run the full pipeline (cross-validation + test evaluation)
 
 ```bash
-python train_chembert_herg.py
+python CardioToxicityChemBert.py
 ```
 
 ### Customize key parameters
@@ -168,12 +165,6 @@ Training uses **Stratified K-Fold Cross-Validation** to ensure balanced class di
 
 At the end, the **last fold's model** is used to evaluate on the external test set (`paper_valid_data.csv`).
 
-```
-Fold 1/5: Train → Validate → Record metrics
-Fold 2/5: Train → Validate → Record metrics
-...
-Fold 5/5: Train → Validate → Evaluate on test set
-```
 
 **To use a simple train/val split instead**, comment out the k-fold block and uncomment the `random_split` section.
 
@@ -214,37 +205,33 @@ Specificity (Recall for Negative Class): 0.8921
 
 | Model | MCC | AUC | Accuracy |
 |-------|-----|-----|----------|
-| ChemBERTa (this work) | ~0.75 | ~0.92 | ~0.88 |
+| ChemBERTa (proposed) | ~0.75 | ~0.92 | ~0.88 |
 
 > Results will vary depending on dataset size, number of folds, and epochs. These are representative values.
 
 ---
 
-## Project Structure
-
-```
-chembert-herg/
-├── train_chembert_herg.py   # Main training & evaluation script
-├── requirements.txt         # Python dependencies
-├── README.md
-└── data/
-    └── herg/
-        ├── herg_train.csv
-        ├── herg_val.csv
-        ├── herg_test.csv
-        └── paper_valid_data.csv
-```
-
----
 
 ## Dependencies
 
 ```
+# Core Deep Learning
 torch>=1.11.0
+torchvision>=0.12.0
+ 
+# Hugging Face
 transformers>=4.18.0
-scikit-learn>=1.0.0
+ 
+# Data & ML
 numpy>=1.21.0
 pandas>=1.3.0
+scikit-learn>=1.0.0
+ 
+# Database
+duckdb>=0.10.0
+ 
+# Utilities
+tqdm>=4.62.0
 ```
 
 Install all at once:
@@ -344,53 +331,5 @@ The rest of the training loop remains **unchanged** — LoRA layers integrate tr
 - `rank=32` → closer to full fine-tuning quality, more parameters
 - Setting `alpha = rank` keeps the effective learning rate stable across different rank choices
 
-### Parameter Count Comparison
-
-| Mode | Approx. Trainable Params |
-|------|--------------------------|
-| Full fine-tuning | ~125,000,000 |
-| LoRA (rank=4)   | ~75,000       |
-| LoRA (rank=16)  | ~300,000      |
-| LoRA (rank=32)  | ~600,000      |
-
-> Exact counts depend on the number of Linear layers in the model. Run the `print` statement above to see the precise count for your configuration.
-
----
 
 
-
-| Parameter | Value | Notes |
-|-----------|-------|-------|
-| Pretrained model | `seyonec/PubChem10M_SMILES_BPE_396_250` | ChemBERTa |
-| Max sequence length | Dynamic (max in dataset) | Computed at runtime |
-| Batch size | 4 | Increase with more VRAM |
-| Learning rate | 2e-5 | AdamW |
-| Epsilon | 1e-8 | AdamW |
-| Warmup steps | 0 | Linear schedule |
-| Folds | 5 | Stratified K-Fold |
-| Epochs per fold | 10 | Adjust as needed |
-
----
-
-## Citation
-
-If you use this code, please cite the ChemBERTa paper:
-
-```bibtex
-@article{chithrananda2020chemberta,
-  title={ChemBERTa: Large-Scale Self-Supervised Pretraining for Molecular Property Prediction},
-  author={Chithrananda, Seyone and Grand, Gabriel and Ramsundar, Bharath},
-  journal={arXiv preprint arXiv:2010.09885},
-  year={2020}
-}
-```
-
----
-
-## License
-
-MIT License — see `LICENSE` for details.
-
----
-
-*Built for computational drug discovery research. Contributions and issues welcome.*
